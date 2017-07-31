@@ -22,8 +22,8 @@ class Entity(pygame.sprite.Sprite):
 
         if sprite_paths:
             self.sprites["no_rotation"] = self.sprites["base"]
-            self.sprites["current"] = self.sprites["base"]
-            self.rect = pygame.Rect((x, y), self.sprites["base"].get_size())
+            self.image = self.sprites["base"]
+            self.rect = pygame.Rect((x, y), self.image.get_size())
         else:
             self.rect = pygame.Rect((x, y), (8, 8))
 
@@ -33,7 +33,7 @@ class Entity(pygame.sprite.Sprite):
 
     @staticmethod
     def load_sprites(sprite_paths, scale):
-        for name, path in sprite_paths.items:
+        for name, path in sprite_paths.items():
             sprite_paths[name] = pygame.image.load(path).convert_alpha()
             sprite_paths[name] = pygame.transform.scale(sprite_paths[name],
                                                         [int(x * scale) for x in sprite_paths[name].get_size()])
@@ -50,7 +50,7 @@ class Entity(pygame.sprite.Sprite):
         rot_rect = orig_rect.copy()
         rot_rect.center = rot_image.get_rect().center
 
-        self.sprites["current"] = rot_image.subsurface(rot_rect).copy()
+        self.image = rot_image.subsurface(rot_rect).copy()
         self.angle = angle
 
     def move_single_axis(self, dx, dy, sprites):
@@ -136,6 +136,7 @@ class Particle(Entity):
 
 class Player(Entity):
     def __init__(self, x, y, sprites):
+        self.speed = 1
         Entity.__init__(self, x, y, sprites)
 
     @staticmethod
