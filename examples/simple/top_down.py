@@ -6,6 +6,10 @@ import examples.simple.extend.entities as extend
 import systems
 
 
+# TODO: camera shake when player shoots
+# TODO: solve movement and then firing issue
+
+
 def main():
     pygame.init()
     size = width, height = 800, 640
@@ -75,7 +79,7 @@ def main():
             player.move(player.speed, 0, colliders)
 
         if pygame.mouse.get_pressed()[0]:
-            player.attack()
+            shake = player.attack()
 
         main_cam.update(player)
 
