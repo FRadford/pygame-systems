@@ -73,7 +73,8 @@ class Follower(systems.entities.Enemy):
 
     def update(self, colliders, surface, cam):
         systems.entities.Enemy.update(self, colliders, surface, cam)
-        self.move_towards(self.target, colliders)
+        if self.health > 0:
+            self.move_towards(self.target, colliders)
 
     def move_towards(self, target, colliders):
         dx, dy = self.rect.centerx - target.rect.centerx, self.rect.centery - target.rect.centery

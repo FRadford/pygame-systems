@@ -80,13 +80,14 @@ def main():
         main_cam.update(player)
 
         for sprite in all_sprites:
-            try:
-                for bullet in sprite.bullets:
-                    screen.blit(bullet.image, main_cam.apply(bullet))
-            except AttributeError:
-                pass
-            finally:
-                screen.blit(sprite.image, main_cam.apply(sprite))
+            if sprite.health > 0:
+                try:
+                    for bullet in sprite.bullets:
+                        screen.blit(bullet.image, main_cam.apply(bullet))
+                except AttributeError:
+                    pass
+                finally:
+                    screen.blit(sprite.image, main_cam.apply(sprite))
 
         all_sprites.update(colliders, screen, main_cam)
 

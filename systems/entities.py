@@ -36,7 +36,7 @@ class Entity(pygame.sprite.Sprite):
         self.x_speed_buffer = 0
         self.y_speed_buffer = 0
 
-        self.health = 0
+        self.health = 1
         self.hurt_bool = False
         self.blood = 50
         self.hurt_blood = round(self.blood / 4)
@@ -115,8 +115,7 @@ class Entity(pygame.sprite.Sprite):
             pass
 
         if self.health <= 0:
-            # TODO: come up with a system to draw particles and bullets after death of sprite
-            self.kill()
+            self.remove(self.groups()[0])
             num_particles = self.gaussian(self.blood, 4)
         self.particles.add(*[Particle(self.rect.x, self.rect.y, (200, 25, 25), 50) for _ in range(num_particles)])
 
@@ -129,6 +128,9 @@ class Entity(pygame.sprite.Sprite):
             self.rotate(self.angle)
             self.hurt_bool = False
             self.hurt_time = self.base_hurt_time
+
+        if self.health <= 0 and len(self.particles) == 0:
+            self.kill()
 
 
 class Particle(Entity):
