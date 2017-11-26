@@ -1,6 +1,30 @@
-import pygame
 import math
 from random import gauss, randint
+
+import pygame
+
+
+def basic_movement(func):
+    def wrapper(self, dx, dy, colliders):
+        self.rect.x += dx
+        self.rect.y += dy
+
+        func(self, dx, dy, colliders)
+
+        for other in colliders:
+            if self is other:
+                pass
+            elif self.check_collision(other):
+                if dx > 0:
+                    self.rect.right = other.rect.left
+                elif dx < 0:
+                    self.rect.left = other.rect.right
+                if dy > 0:
+                    self.rect.bottom = other.rect.top
+                elif dy < 0:
+                    self.rect.top = other.rect.bottom
+
+    return wrapper
 
 
 class Entity(pygame.sprite.Sprite):
@@ -8,19 +32,21 @@ class Entity(pygame.sprite.Sprite):
         super(Entity, self).__init__()
 
         self.angle = angle
+        self.speed = 1
         self.x_speed_buffer = 0
         self.y_speed_buffer = 0
 
-        self.sprites = self.load_sprites(sprite_paths, scale)
-
-        self.health = 0
+        self.health = 1
         self.hurt_bool = False
         self.blood = 50
         self.hurt_blood = round(self.blood / 4)
         self.base_hurt_time = 20
         self.hurt_time = self.base_hurt_time
 
+        self.particles = pygame.sprite.Group()
+
         if sprite_paths:
+            self.sprites = self.load_sprites(sprite_paths, scale)
             self.sprites["no_rotation"] = self.sprites["base"]
             self.image = self.sprites["base"]
             self.rect = pygame.Rect((x, y), self.image.get_size())
@@ -29,7 +55,11 @@ class Entity(pygame.sprite.Sprite):
 
     @staticmethod
     def gaussian(base, scale):
-        return gauss(base, round(base / scale))
+        return int(gauss(base, round(base / scale)))
+
+    @staticmethod
+    def clamp(n, smallest, largest):
+        return max(smallest, min(n, largest))
 
     @staticmethod
     def load_sprites(sprite_paths, scale):
@@ -53,57 +83,44 @@ class Entity(pygame.sprite.Sprite):
         self.image = rot_image.subsurface(rot_rect).copy()
         self.angle = angle
 
-    def move_single_axis(self, dx, dy, sprites):
-        self.rect.x += dx
-        self.rect.y += dy
+    @basic_movement
+    def move_single_axis(self, dx, dy, colliders):
+        pass
 
-        for other in sprites:
-            if self == other:
-                pass
-            elif self.check_collision(other):
-                if dx > 0:
-                    self.rect.right = other.rect.left
-                elif dx < 0:
-                    self.rect.left = other.rect.right
-                if dy > 0:
-                    self.rect.bottom = other.rect.top
-                elif dy < 0:
-                    self.rect.top = other.rect.bottom
-
-    def move(self, dx, dy, sprites):
+    def move(self, dx, dy, colliders):
         if dx != 0:
             self.x_speed_buffer += dx
             if abs(self.x_speed_buffer) >= 1:
                 speed_int = int(self.x_speed_buffer)
 
-                self.move_single_axis(speed_int, 0, sprites)
+                self.move_single_axis(speed_int, 0, colliders)
                 self.x_speed_buffer -= speed_int
         if dy != 0:
             self.y_speed_buffer += dy
             if abs(self.y_speed_buffer) >= 1:
                 speed_int = int(self.y_speed_buffer)
 
-                self.move_single_axis(0, speed_int, sprites)
+                self.move_single_axis(0, speed_int, colliders)
                 self.y_speed_buffer -= speed_int
 
     def damage(self, value):
         self.health -= value
-        num_particles = self.gaussian(self.hurt_blood, 2)
+        num_particles = self.gaussian(self.hurt_blood, 4)
         self.hurt_bool = True
 
-        self.sprites["no_rotation"] = self.sprites["hurt"]
-        self.rotate(self.angle)
+        try:
+            self.sprites["no_rotation"] = self.sprites["hurt"]
+            self.rotate(self.angle)
+        except KeyError:
+            pass
 
-        if self.health > 0:
-            for _ in range(num_particles):
-                yield Particle(self.rect.x, self.rect.y, (200, 25, 25), 20)
-        else:
-            self.kill()
-            num_particles = self.gaussian(self.blood, 2)
-            for _ in range(num_particles):
-                yield Particle(self.rect.x, self.rect.y, (200, 25, 25), 20)
+        if self.health <= 0:
+            self.remove(self.groups()[0])
+            num_particles = self.gaussian(self.blood, 4)
+        self.particles.add(*[Particle(self.rect.x, self.rect.y, (200, 25, 25), 50) for _ in range(num_particles)])
 
-    def update(self):
+    def update(self, colliders, surface, cam):
+        self.particles.update(colliders, surface, cam)
         if self.hurt_bool and self.hurt_time > 0:
             self.hurt_time -= 1
         elif self.hurt_bool:
@@ -112,23 +129,34 @@ class Entity(pygame.sprite.Sprite):
             self.hurt_bool = False
             self.hurt_time = self.base_hurt_time
 
+        if self.health <= 0 and len(self.particles) == 0:
+            self.kill()
+
 
 class Particle(Entity):
     def __init__(self, x, y, rgb, duration):
-        self.rgb = (self.gaussian(rgb[0], 4), self.gaussian(rgb[1], 4), self.gaussian(rgb[2], 4))
-        self.duration = self.gaussian(duration, 2)
-        self.move_gen = self.move_random(10)
-
         Entity.__init__(self, x, y)
+        self.rgb = (self.clamp(self.gaussian(rgb[0], 4), 0, 255),
+                    self.clamp(self.gaussian(rgb[1], 4), 0, 255),
+                    self.clamp(self.gaussian(rgb[2], 4), 0, 255))
+        self.duration = self.gaussian(duration, 4)
+        self.move_gen = self.move_random(10)
 
     @staticmethod
     def move_random(mag):
-        for x in range(randint(-mag, mag)):
+        for _ in range(randint(-mag, mag)):
+            x = randint(-mag, mag)
             y = randint(-mag, mag)
             yield(x, y)
 
-    def update(self):
+    def update(self, colliders, surface, cam):
         if self.duration > 0:
+            try:
+                self.move(*next(self.move_gen), colliders)
+            except StopIteration:
+                pass
+            finally:
+                pygame.draw.rect(surface, self.rgb, cam.apply(self))
             self.duration -= 1
         else:
             self.kill()
@@ -136,7 +164,6 @@ class Particle(Entity):
 
 class Player(Entity):
     def __init__(self, x, y, sprites):
-        self.speed = 1
         Entity.__init__(self, x, y, sprites)
 
     @staticmethod
@@ -149,9 +176,9 @@ class Player(Entity):
                 yield (x * s, x * s)
             s *= -1
 
-    def rotate_to_mouse(self):
+    def rotate_to_mouse(self, center):
         mouse_x, mouse_y = pygame.mouse.get_pos()
-        move_vector = (self.rect.centerx - mouse_x, self.rect.centery - mouse_y)
+        move_vector = (center[0] - mouse_x, center[1] - mouse_y)
 
         try:
             theta = -math.degrees(math.atan2(move_vector[1], move_vector[0])) + 90
@@ -159,3 +186,8 @@ class Player(Entity):
             theta = 0
 
         self.rotate(theta)
+
+
+class Enemy(Entity):
+    def __init__(self, x, y, sprites):
+        Entity.__init__(self, x, y, sprites)
