@@ -4,70 +4,83 @@ from random import gauss, randint
 import pygame
 
 
+# decorator function to check collisions on sprites
 def basic_movement(func):
     def wrapper(self, dx, dy, colliders):
-        self.rect.x += dx
-        self.rect.y += dy
+        self.rect.x += dx  # add change in x to x position
+        self.rect.y += dy  # add change in y to y position
 
-        func(self, dx, dy, colliders)
+        func(self, dx, dy, colliders)  # call wrapped function
 
         for other in colliders:
             if self is other:
                 pass
-            elif self.check_collision(other):
+            elif self.check_collision(other):  # check if collision is happening
+                # Check each axis and correct positioning on that axis, effectively blocking objects from moving into
+                # or passing through one another
                 if dx > 0:
-                    self.rect.right = other.rect.left
+                    self.rect.right = other.rect.left  # if colliding with the left side of an object move out
                 elif dx < 0:
-                    self.rect.left = other.rect.right
+                    self.rect.left = other.rect.right  # if colliding with the right side of an object move out
                 if dy > 0:
-                    self.rect.bottom = other.rect.top
+                    self.rect.bottom = other.rect.top  # if colliding with the top side of an object move out
                 elif dy < 0:
-                    self.rect.top = other.rect.bottom
+                    self.rect.top = other.rect.bottom  # if colliding with the bottom side of an object move out
 
     return wrapper
 
 
-class Entity(pygame.sprite.Sprite):
-    def __init__(self, x, y, sprite_paths=None, scale=1.0, angle=0.0):
-        super(Entity, self).__init__()
+def gaussian(mu, inverse_scale):
+    # return a random integer from a gaussian distribution with mean mu and standard deviation mu / inverse_scale
+    return int(gauss(mu, round(mu / inverse_scale)))
 
-        self.angle = angle
-        self.speed = 1
-        self.x_speed_buffer = 0
-        self.y_speed_buffer = 0
 
-        self.health = 1
-        self.hurt_bool = False
-        self.blood = 50
-        self.hurt_blood = round(self.blood / 4)
-        self.base_hurt_time = 20
-        self.hurt_time = self.base_hurt_time
+def clamp(n, minimum, maximum):
+    # clamp any number n between minimum and maximum values
+    return max(minimum, min(n, maximum))
 
-        self.particles = pygame.sprite.Group()
+
+def load_sprites(sprite_paths, scale):
+    for name, path in sprite_paths.items():
+        sprite_paths[name] = pygame.image.load(path).convert_alpha()
+        sprite_paths[name] = pygame.transform.scale(sprite_paths[name],
+                                                    [int(x * scale) for x in sprite_paths[name].get_size()])
+    return sprite_paths
+
+
+class StaticSprite(pygame.sprite.Sprite):
+    """
+    Basic sprite class for static objects
+
+    Adds automatic image loading from files
+    """
+
+    def __init__(self, x, y, sprite_paths=None, scale=1.0):
+        super(StaticSprite, self).__init__()
 
         if sprite_paths:
-            self.sprites = self.load_sprites(sprite_paths, scale)
+            self.sprites = load_sprites(sprite_paths, scale)
             self.sprites["no_rotation"] = self.sprites["base"]
             self.image = self.sprites["base"]
             self.rect = pygame.Rect((x, y), self.image.get_size())
         else:
             self.rect = pygame.Rect((x, y), (8, 8))
 
-    @staticmethod
-    def gaussian(base, scale):
-        return int(gauss(base, round(base / scale)))
 
-    @staticmethod
-    def clamp(n, smallest, largest):
-        return max(smallest, min(n, largest))
+class DynamicSprite(StaticSprite):
+    """
+    Basic sprite class meant to move
 
-    @staticmethod
-    def load_sprites(sprite_paths, scale):
-        for name, path in sprite_paths.items():
-            sprite_paths[name] = pygame.image.load(path).convert_alpha()
-            sprite_paths[name] = pygame.transform.scale(sprite_paths[name],
-                                                        [int(x * scale) for x in sprite_paths[name].get_size()])
-        return sprite_paths
+    Adds movement with collision checking and rotation
+    """
+
+    def __init__(self, x, y, sprite_paths=None, scale=1.0, angle=0.0):
+        super(DynamicSprite, self).__init__(x, y, sprite_paths, scale)
+
+        self.angle = angle
+        self.speed = 1
+        self.x_speed_buffer = 0
+        self.y_speed_buffer = 0
 
     def check_collision(self, other):
         return self.rect.colliderect(other.rect)
@@ -103,9 +116,29 @@ class Entity(pygame.sprite.Sprite):
                 self.move_single_axis(0, speed_int, colliders)
                 self.y_speed_buffer -= speed_int
 
+
+class LivingSprite(DynamicSprite):
+    """
+    Basic sprite class meant for living objects
+
+    Adds health, damage, particles, and death
+    """
+
+    def __init__(self, x, y, sprite_paths=None, scale=1.0, angle=0.0):
+        super(LivingSprite, self).__init__(x, y, sprite_paths, scale, angle)
+
+        self.health = 1
+        self.hurt_bool = False
+        self.blood = 50
+        self.hurt_blood = round(self.blood / 4)
+        self.base_hurt_time = 20
+        self.hurt_time = self.base_hurt_time
+
+        self.particles = pygame.sprite.Group()
+
     def damage(self, value):
         self.health -= value
-        num_particles = self.gaussian(self.hurt_blood, 4)
+        num_particles = gaussian(self.hurt_blood, 4)
         self.hurt_bool = True
 
         try:
@@ -116,7 +149,7 @@ class Entity(pygame.sprite.Sprite):
 
         if self.health <= 0:
             self.remove(self.groups()[0])
-            num_particles = self.gaussian(self.blood, 4)
+            num_particles = gaussian(self.blood, 4)
         self.particles.add(*[Particle(self.rect.x, self.rect.y, (200, 25, 25), 50) for _ in range(num_particles)])
 
     def update(self, colliders, surface, cam):
@@ -133,13 +166,17 @@ class Entity(pygame.sprite.Sprite):
             self.kill()
 
 
-class Particle(Entity):
+class Particle(DynamicSprite):
+    """
+    Basic particle class with automatic random motion, built in timer with random distribution, and colour variation
+    """
     def __init__(self, x, y, rgb, duration):
-        Entity.__init__(self, x, y)
-        self.rgb = (self.clamp(self.gaussian(rgb[0], 4), 0, 255),
-                    self.clamp(self.gaussian(rgb[1], 4), 0, 255),
-                    self.clamp(self.gaussian(rgb[2], 4), 0, 255))
-        self.duration = self.gaussian(duration, 4)
+        super(Particle, self).__init__(x, y)
+
+        self.rgb = (clamp(gaussian(rgb[0], 4), 0, 255),
+                    clamp(gaussian(rgb[1], 4), 0, 255),
+                    clamp(gaussian(rgb[2], 4), 0, 255))
+        self.duration = gaussian(duration, 4)
         self.move_gen = self.move_random(10)
 
     @staticmethod
@@ -147,7 +184,7 @@ class Particle(Entity):
         for _ in range(randint(-mag, mag)):
             x = randint(-mag, mag)
             y = randint(-mag, mag)
-            yield(x, y)
+            yield (x, y)
 
     def update(self, colliders, surface, cam):
         if self.duration > 0:
@@ -162,9 +199,14 @@ class Particle(Entity):
             self.kill()
 
 
-class Player(Entity):
+class Player(LivingSprite):
+    """
+    Basic player class
+
+    Should be extended to suit the particular genre of game
+    """
     def __init__(self, x, y, sprites):
-        Entity.__init__(self, x, y, sprites)
+        super(Player, self).__init__(x, y, sprites)
 
     @staticmethod
     def shake_screen():
@@ -188,6 +230,11 @@ class Player(Entity):
         self.rotate(theta)
 
 
-class Enemy(Entity):
+class Enemy(LivingSprite):
+    """
+    Placeholder enemy class
+
+    Should be extended to suit the particular genre of game
+    """
     def __init__(self, x, y, sprites):
-        Entity.__init__(self, x, y, sprites)
+        super(Enemy, self).__init__(x, y, sprites)

@@ -2,15 +2,20 @@ import pygame
 
 
 class Camera(object):
+    """
+    Camera class to smoothly change the viewing area on the game window
+    """
     def __init__(self, func, view_size):
         self.func = func
         self.state = pygame.Rect((0, 0), view_size)
         self.view_size = view_size
 
     def apply(self, target):
+        # applies the camera offset to the target sprite by aligning it's rect with the camera rect
         return target.rect.move(self.state.topleft)
 
     def update(self, target):
+        # updates the camera state to follow the target sprite using a selected function
         self.state = self.func(self.state, target.rect, self.view_size)
 
 

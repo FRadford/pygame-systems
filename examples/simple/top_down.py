@@ -6,16 +6,16 @@ import examples.simple.extend.entities as extend
 import systems
 
 
-# TODO: camera shake when player shoots
-# TODO: solve movement and then firing issue
-
-
 def main():
+    # screen setup
     pygame.init()
     size = width, height = 800, 640
-    white = (255, 255, 255)
     screen = pygame.display.set_mode(size)
 
+    # colour constants
+    WHITE = (255, 255, 255)
+
+    # group setup
     colliders = pygame.sprite.Group()
     non_colliders = pygame.sprite.Group()
     all_sprites = pygame.sprite.Group()
@@ -43,6 +43,7 @@ def main():
         "###############################"
     ]
 
+    # parse level list and add walls and floors to groups
     x, y = 0, 0
     for row in level:
         for col in row:
@@ -54,21 +55,25 @@ def main():
         y += 32
         x = 0
 
-    player.add(colliders, all_sprites)
+    player.add(colliders, all_sprites)  # add player to groups
+
+    # setup basic enemy and add to groups
     follower = extend.Follower(100, 100, {"base": "examples/simple/assets/enemy.png",
                                           "hurt": "examples/simple/assets/enemy-hurt.png"},
                                player)
     follower.add(colliders, all_sprites)
 
+    # game loop
     while True:
         clock.tick(60)
+        screen.fill(WHITE)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
 
-        keys = pygame.key.get_pressed()
+        # handle events and move player
         player.rotate_to_mouse((width / 2, height / 2))
-        screen.fill(white)
+        keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
             player.move(0, -player.speed, colliders)
         if keys[pygame.K_s]:
@@ -79,23 +84,25 @@ def main():
             player.move(player.speed, 0, colliders)
 
         if pygame.mouse.get_pressed()[0]:
-            shake = player.attack()
+            shake = player.attack()  # TODO: Offset camera by increments from shake generator
 
-        main_cam.update(player)
+        main_cam.update(player)  # tell camera to follow player
 
         for sprite in all_sprites:
-            if sprite.health > 0:
-                try:
-                    for bullet in sprite.bullets:
-                        screen.blit(bullet.image, main_cam.apply(bullet))
-                except AttributeError:
-                    pass
-                finally:
-                    screen.blit(sprite.image, main_cam.apply(sprite))
+            if isinstance(sprite, systems.entities.LivingSprite):  # check if sprite is living
+                if sprite.health > 0:
+                    try:
+                        for bullet in sprite.projectiles:
+                            screen.blit(bullet.image, main_cam.apply(bullet))  # draw projectiles to screen
+                    except AttributeError:  # will be raised if sprite has no projectiles group
+                        pass
+                    screen.blit(sprite.image, main_cam.apply(sprite))  # draw living sprites if they have health
+            else:
+                screen.blit(sprite.image, main_cam.apply(sprite))  # draw other sprites
 
-        all_sprites.update(colliders, screen, main_cam)
+        all_sprites.update(colliders, screen, main_cam)  # update sprites(kill dead sprites, update damage timers)
 
-        pygame.display.flip()
+        pygame.display.flip()  # update display
 
 
 if __name__ == "__main__":
