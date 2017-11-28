@@ -9,8 +9,10 @@ import systems
 def main():
     # screen setup
     pygame.init()
-    size = width, height = 800, 640
-    screen = pygame.display.set_mode(size)
+    size = 0, 0
+    screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
+
+    width, height = screen.get_size()
 
     # colour constants
     WHITE = (255, 255, 255)
@@ -72,7 +74,7 @@ def main():
                 sys.exit()
 
         # handle events and move player
-        player.rotate_to_mouse((width / 2, height / 2))
+        player.rotate_to_mouse()
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
             player.move(0, -player.speed, colliders)
@@ -82,6 +84,9 @@ def main():
             player.move(-player.speed, 0, colliders)
         if keys[pygame.K_d]:
             player.move(player.speed, 0, colliders)
+
+        if keys[pygame.K_ESCAPE]:
+            sys.exit()
 
         if pygame.mouse.get_pressed()[0]:
             shake = player.attack()  # TODO: Offset camera by increments from shake generator
