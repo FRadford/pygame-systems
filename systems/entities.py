@@ -135,6 +135,7 @@ class LivingSprite(DynamicSprite):
         self.hurt_time = self.base_hurt_time
 
         self.particles = pygame.sprite.Group()
+        self.projectiles = pygame.sprite.Group()
 
     def damage(self, value):
         self.health -= value

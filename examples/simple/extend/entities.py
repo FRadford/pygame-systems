@@ -1,9 +1,7 @@
 import itertools
 import math
 
-import pygame
-
-import systems.entities
+import systems
 
 
 class Player(systems.entities.Player):
@@ -12,8 +10,6 @@ class Player(systems.entities.Player):
         self.attack_type = self.shoot
         self.attack_strength = 5
         self.cool_down = 10
-
-        self.projectiles = pygame.sprite.Group()
 
         self.max_health = 100
         self.health = self.max_health
@@ -40,7 +36,7 @@ class Player(systems.entities.Player):
 
 class Bullet(systems.entities.DynamicSprite):
     def __init__(self, x, y, angle, speed, strength):
-        super(Bullet, self).__init__(x, y, {"base": "examples/simple/assets/bullet.png"}, scale=0.5)
+        super(Bullet, self).__init__(x, y, {"base": "assets/bullet.png"}, scale=0.5)
         self.speed = speed
         self.strength = strength
         self.dx, self.dy = self.parse_directions(math.radians(-angle - 90), speed)
@@ -64,7 +60,7 @@ class Bullet(systems.entities.DynamicSprite):
                             other.damage(self.strength)
 
 
-class Follower(systems.entities.Enemy):
+class Follower(systems.entities.Enemy, systems.ai.AIMixin):
     def __init__(self, x, y, sprites, target):
         super(Follower, self).__init__(x, y, sprites)
         self.speed = 0.75
@@ -72,17 +68,12 @@ class Follower(systems.entities.Enemy):
         self.target = target
         self.health = 10
 
+        self.move_towards = self.move_to_target_simple
+
     def update(self, colliders, surface, cam):
         systems.entities.Enemy.update(self, colliders, surface, cam)
         if self.health > 0:
             self.move_towards(self.target, colliders)
-
-    def move_towards(self, target, colliders):
-        dx, dy = self.rect.centerx - target.rect.centerx, self.rect.centery - target.rect.centery
-        dist = math.hypot(dx, dy)
-        dx, dy = -(dx / dist), -(dy / dist)
-
-        self.move(dx * self.speed, dy * self.speed, colliders)
 
     @systems.entities.basic_movement
     def move_single_axis(self, dx, dy, colliders):
@@ -96,9 +87,9 @@ class Follower(systems.entities.Enemy):
 
 class Floor(systems.entities.StaticSprite):
     def __init__(self, x, y):
-        super(Floor, self).__init__(x, y, {"base": "examples/simple/assets/floor.png"})
+        super(Floor, self).__init__(x, y, {"base": "assets/floor.png"})
 
 
 class Wall(systems.entities.StaticSprite):
     def __init__(self, x, y):
-        super(Wall, self).__init__(x, y, {"base": "examples/simple/assets/wall.png"}, scale=2)
+        super(Wall, self).__init__(x, y, {"base": "assets/wall.png"}, scale=2)

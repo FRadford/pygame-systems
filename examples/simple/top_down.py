@@ -23,8 +23,8 @@ def main():
     all_sprites = pygame.sprite.Group()
 
     player = extend.Player(width / 2, height / 2,
-                           {"base": "examples/simple/assets/player.png",
-                            "hurt": "examples/simple/assets/player-hurt.png"})
+                           {"base": "assets/player.png",
+                            "hurt": "assets/player-hurt.png"})
     main_cam = systems.camera.Camera(systems.camera.simple_camera, (width, height))
     clock = pygame.time.Clock()
 
@@ -60,8 +60,8 @@ def main():
     player.add(colliders, all_sprites)  # add player to groups
 
     # setup basic enemy and add to groups
-    follower = extend.Follower(100, 100, {"base": "examples/simple/assets/enemy.png",
-                                          "hurt": "examples/simple/assets/enemy-hurt.png"},
+    follower = extend.Follower(100, 100, {"base": "assets/enemy.png",
+                                          "hurt": "assets/enemy-hurt.png"},
                                player)
     follower.add(colliders, all_sprites)
 
