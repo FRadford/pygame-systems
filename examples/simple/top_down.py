@@ -9,8 +9,8 @@ import systems
 def main():
     # screen setup
     pygame.init()
-    size = 0, 0
-    screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
+    size = 800, 400
+    screen = pygame.display.set_mode(size)
 
     width, height = screen.get_size()
 
@@ -74,7 +74,7 @@ def main():
                 sys.exit()
 
         # handle events and move player
-        player.rotate_to_mouse()
+        player.rotate_to_target(main_cam.reverse(pygame.mouse.get_pos()))
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
             player.move(0, -player.speed, colliders)

@@ -219,14 +219,13 @@ class Player(LivingSprite):
                 yield (x * s, x * s)
             s *= -1
 
-    def rotate_to_mouse(self):
-        mouse_x, mouse_y = pygame.mouse.get_pos()
+    def rotate_to_target(self, target):
+        # get vector between player and target
+        vector = (self.rect.x - target[0], self.rect.y - target[1])
 
-        # get vector between player and mouse
-        mouse_vector = (self.rect.x - mouse_x, self.rect.y - mouse_y)
-
+        # calculate angle between player and target
         try:
-            theta = -math.degrees(math.atan2(mouse_vector[1], mouse_vector[0])) + 90
+            theta = -math.degrees(math.atan2(vector[1], vector[0])) + 90
         except ZeroDivisionError:
             theta = 0
 

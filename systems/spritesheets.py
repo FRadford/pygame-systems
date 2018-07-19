@@ -6,8 +6,7 @@ class SpriteSheet(object):
         try:
             self.sheet = pygame.image.load(filename).convert_alpha()
         except pygame.error as e:
-            print("Could not load spritesheet:", filename)
-            raise SystemExit(e)
+            raise SystemExit(e, "Could not load spritesheet:" + filename)
 
     def image_at(self, selector):
         rect = pygame.Rect(selector)
