@@ -14,6 +14,10 @@ class Camera(object):
         # applies the camera offset to the target sprite by aligning it's rect with the camera rect
         return target.rect.move(self.state.topleft)
 
+    def reverse(self, pos):
+        # converts screen coordinates to world coordinates
+        return pos[0] - self.state.left, pos[1] - self.state.top
+
     def update(self, target):
         # updates the camera state to follow the target sprite using a selected function
         self.state = self.func(self.state, target.rect, self.view_size)
