@@ -2,23 +2,46 @@ import pygame
 
 
 class SpriteSheet(object):
+    """
+    Class to load images from a spritesheet
+    """
     def __init__(self, filename):
         try:
+            # load sheet as image
             self.sheet = pygame.image.load(filename).convert_alpha()
         except pygame.error as e:
             raise SystemExit(e, "Could not load spritesheet:" + filename)
 
-    def image_at(self, selector):
-        rect = pygame.Rect(selector)
+    def image_at(self, rect):
+        """
+        Return the image at the target location selected by a rectangle.
+
+        :param rect: pygame.Rect
+        :return: pygame.Surface
+        """
+        # Create a surface and cut the spritesheet based on it
         image = pygame.Surface(rect.size).convert_alpha()
         image.blit(self.sheet, (0, 0), rect)
         return image
 
-    def images_at(self, selectors):
-        return [self.image_at(selector) for selector in selectors]
+    def images_at(self, rects):
+        """
+        Returns a list of images selected by a supplied list of rectangles
 
-    def load_strip(self, selector, image_count):
-        return self.images_at([(selector[0] + selector[2] * x, selector[1], selector[2], selector[3])
+        :param rects: tuple(pygame.Rect)
+        :return: list
+        """
+        return [self.image_at(rect) for rect in rects]
+
+    def load_strip(self, start_rect, image_count):
+        """
+        Returns a specified number of images after a defined selector as a list
+
+        :param start_rect: pygame.Rect
+        :param image_count: int
+        :return: list
+        """
+        return self.images_at([(start_rect[0] + start_rect[2] * x, start_rect[1], start_rect[2], start_rect[3])
                                for x in range(image_count)])
 
 
