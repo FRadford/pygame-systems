@@ -1,4 +1,4 @@
-import pygame
+import pygame.rect
 
 
 class Camera(object):
@@ -24,13 +24,13 @@ class Camera(object):
 
 
 def simple_camera(camera, target_rect, view_size):
-    x, y, _, _ = target_rect
+    x, y = target_rect.center
     _, _, w, h = camera
     return pygame.Rect(-x + (view_size[0] / 2), -y + (view_size[1] / 2), w, h)
 
 
 def complex_camera(camera, target_rect, view_size):
-    x, y, _, _ = target_rect
+    x, y = target_rect.center
     _, _, w, h = camera
     x, y, _, _ = -x + (view_size[0] / 2), -y + (view_size[1] / 2), w, h
 

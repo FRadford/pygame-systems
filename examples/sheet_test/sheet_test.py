@@ -1,13 +1,15 @@
-import pygame
-import systems.spritesheets
 import sys
+
+import pygame
+
+import helpers
 
 pygame.init()
 screen = pygame.display.set_mode((400, 300))
 FPS = 120
 frames = FPS / 6
 
-strip = systems.spritesheets.SpriteSheetAnimator("assets/gradient.png", (0, 0, 16, 16), 7, True, frames)
+strip = helpers.SpriteSheetAnimator("assets/gradient.png", (0, 0, 16, 16), 7, True, frames)
 
 clock = pygame.time.Clock()
 image = strip.next()
