@@ -4,7 +4,7 @@ import random
 
 import pygame
 
-import systems
+import objects
 
 
 class Bunch:
@@ -43,12 +43,12 @@ class HeartContainer(pygame.sprite.AbstractGroup):
             self.remove(self.sprites()[-1])
 
 
-class Heart(systems.entities.StaticSprite):
+class Heart(objects.StaticSprite):
     def __init__(self, index):
         super(Heart, self).__init__(36 * index + 14, 14, {"base": "assets/sprites/heart.png"}, scale=2.0)
 
 
-class Ship(systems.entities.Player):
+class Ship(objects.Player):
     def __init__(self, x, y, sprites):
         super(Ship, self).__init__(x, y, sprites, scale=2.0)
         self.attack_type = self.shoot
@@ -74,7 +74,7 @@ class Ship(systems.entities.Player):
             return itertools.repeat(0, 0)
 
     def update(self, colliders, surface, cam):
-        systems.entities.Player.update(self, colliders, surface, cam)
+        objects.Player.update(self, colliders, surface, cam)
         self.projectiles.update(colliders)
         if self.cool_down >= 0:
             self.cool_down -= 1
@@ -95,7 +95,7 @@ class Ship(systems.entities.Player):
         super(Ship, self).kill()
 
 
-class Bullet(systems.entities.DynamicSprite):
+class Bullet(objects.DynamicSprite):
     def __init__(self, x, y, angle, speed, strength):
         super(Bullet, self).__init__(x, y, {"base": "assets/sprites/laser.png"}, scale=2.0)
         self.speed = speed
@@ -173,7 +173,7 @@ class AsteroidController(pygame.sprite.AbstractGroup):
         super(AsteroidController, self).remove_internal(sprite)
 
 
-class Asteroid(systems.entities.LivingSprite):
+class Asteroid(objects.LivingSprite):
     def __init__(self, x, y, speed, rot_speed, run_particles=True):
         self.explosion = pygame.mixer.Sound("assets/sfx/explosion.wav")
 
@@ -217,9 +217,13 @@ class Asteroid(systems.entities.LivingSprite):
                     other.damage(self.strength, colliders)
 
     def off_surface(self, surface):
-        if self.rect.left < 0 or \
-                self.rect.right > surface.get_rect().width or \
-                self.rect.top > surface.get_rect().height:
+        """
+        Does the same as the overriden method except that this method ignores the top side of the surface as
+        asteroids are created above the top of the window.
+        """
+        if self.rect.right < 0 or \
+                        self.rect.left > surface.get_rect().width or \
+                        self.rect.top > surface.get_rect().height:
             return True
         return False
 

@@ -41,16 +41,17 @@ class SpriteSheet(object):
         :param image_count: int
         :return: list
         """
-        return self.images_at([(start_rect[0] + start_rect[2] * x, start_rect[1], start_rect[2], start_rect[3])
-                               for x in range(image_count)])
+        return self.images_at(
+            [pygame.Rect(start_rect[0] + start_rect[2] * x, start_rect[1], start_rect[2], start_rect[3])
+             for x in range(image_count)])
 
 
 class SpriteSheetAnimator(object):
-    def __init__(self, filename, rect, count, loop=False, frames=1):
+    def __init__(self, filename, selector, count, loop=False, frames=1):
         self.filename = filename
         self.ss = SpriteSheet(self.filename)
 
-        self.images = self.ss.load_strip(rect, count)
+        self.images = self.ss.load_strip(selector, count)
         self.loop = loop
 
         self.max_frames = frames

@@ -2,8 +2,8 @@ import sys
 
 import pygame
 
-import examples.simple.extend.entities as extend
-import systems
+import examples.simple.extend as extend
+import objects
 
 
 def main():
@@ -22,10 +22,10 @@ def main():
     non_colliders = pygame.sprite.Group()
     all_sprites = pygame.sprite.Group()
 
-    player = extend.Player(width / 2, height / 2,
-                           {"base": "assets/player.png",
-                            "hurt": "assets/player-hurt.png"})
-    main_cam = systems.camera.Camera(systems.camera.simple_camera, (width, height))
+    player = extend.TopDownPlayer(width / 2, height / 2,
+                                  {"base": "assets/player.png",
+                                   "hurt": "assets/player-hurt.png"})
+    main_cam = objects.Camera(objects.simple_camera, (width, height))
     clock = pygame.time.Clock()
 
     level = [
@@ -94,7 +94,7 @@ def main():
         main_cam.update(player)  # tell camera to follow player
 
         for sprite in all_sprites:
-            if isinstance(sprite, systems.entities.LivingSprite):  # check if sprite is living
+            if isinstance(sprite, objects.LivingSprite):  # check if sprite is living
                 if sprite.health > 0:
                     try:
                         for bullet in sprite.projectiles:

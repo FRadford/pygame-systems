@@ -1,12 +1,12 @@
 import itertools
 import math
 
-import systems
+import objects
 
 
-class Player(systems.entities.Player):
+class TopDownPlayer(objects.Player):
     def __init__(self, x, y, sprites):
-        super(Player, self).__init__(x, y, sprites)
+        super(TopDownPlayer, self).__init__(x, y, sprites)
         self.attack_type = self.shoot
         self.attack_strength = 5
         self.cool_down = 10
@@ -23,7 +23,7 @@ class Player(systems.entities.Player):
             return itertools.repeat(0, 0)
 
     def update(self, colliders, surface, cam):
-        systems.entities.Player.update(self, colliders, surface, cam)
+        objects.Player.update(self, colliders, surface, cam)
         for bullet in self.projectiles:
             bullet.move(bullet.dx, bullet.dy, colliders)
         if self.cool_down >= 0:
@@ -34,7 +34,7 @@ class Player(systems.entities.Player):
         return self.shake_screen()
 
 
-class Bullet(systems.entities.DynamicSprite):
+class Bullet(objects.DynamicSprite):
     def __init__(self, x, y, angle, speed, strength):
         super(Bullet, self).__init__(x, y, {"base": "assets/bullet.png"}, scale=0.5)
         self.speed = speed
@@ -54,13 +54,13 @@ class Bullet(systems.entities.DynamicSprite):
                 if self is other:
                     pass
                 elif self.check_collision(other):
-                    if not isinstance(other, Player):
+                    if not isinstance(other, TopDownPlayer):
                         self.kill()
                         if hasattr(other, "damage"):
                             other.damage(self.strength)
 
 
-class Follower(systems.entities.Enemy, systems.ai.AIMixin):
+class Follower(objects.Enemy, objects.AIMixin):
     def __init__(self, x, y, sprites, target):
         super(Follower, self).__init__(x, y, sprites)
         self.speed = 0.75
@@ -71,11 +71,11 @@ class Follower(systems.entities.Enemy, systems.ai.AIMixin):
         self.move_towards = self.move_to_target_simple
 
     def update(self, colliders, surface, cam):
-        systems.entities.Enemy.update(self, colliders, surface, cam)
+        objects.Enemy.update(self, colliders, surface, cam)
         if self.health > 0:
             self.move_towards(self.target, colliders)
 
-    @systems.entities.basic_movement
+    @objects.basic_movement
     def move_single_axis(self, dx, dy, colliders):
         for other in colliders:
             if self is other:
@@ -85,11 +85,11 @@ class Follower(systems.entities.Enemy, systems.ai.AIMixin):
                     self.target.damage(self.attack_strength)
 
 
-class Floor(systems.entities.StaticSprite):
+class Floor(objects.StaticSprite):
     def __init__(self, x, y):
         super(Floor, self).__init__(x, y, {"base": "assets/floor.png"})
 
 
-class Wall(systems.entities.StaticSprite):
+class Wall(objects.StaticSprite):
     def __init__(self, x, y):
         super(Wall, self).__init__(x, y, {"base": "assets/wall.png"}, scale=2)

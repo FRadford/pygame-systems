@@ -2,8 +2,8 @@ import sys
 
 import pygame
 
-import examples.asteroids.extend.entities as extend
-import systems
+import examples.asteroids.extend as extend
+import objects
 
 # Constants
 WIDTH = 800
@@ -33,7 +33,7 @@ def main():
     hearts = extend.HeartContainer(player)
     score_counter = extend.ScoreCounter(24)
 
-    main_cam = systems.camera.Camera(systems.camera.simple_camera, (WIDTH, HEIGHT))
+    main_cam = objects.Camera(objects.simple_camera, (WIDTH, HEIGHT))
     clock = pygame.time.Clock()
 
     game_over_text = pygame.font.Font(None, 64)
@@ -54,9 +54,9 @@ def main():
             player.attack()
 
         for sprite in all_sprites:
-            if isinstance(sprite, systems.entities.DynamicSprite) and sprite.off_surface(screen):
+            if isinstance(sprite, objects.DynamicSprite) and sprite.off_surface(screen):
                 sprite.kill()
-            if isinstance(sprite, systems.entities.LivingSprite):
+            if isinstance(sprite, objects.LivingSprite):
                 if sprite.health > 0:
                     if sprite is player:
                         for bullet in sprite.projectiles:

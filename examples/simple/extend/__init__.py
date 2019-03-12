@@ -1,1 +1,1 @@
-import examples.simple.extend.entities
+from .entities import *

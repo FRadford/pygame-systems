@@ -1,4 +1,4 @@
-import pygame
+import pygame.rect
 
 
 class Camera(object):

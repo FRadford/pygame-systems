@@ -1,1 +1,1 @@
-import examples.asteroids.extend.entities
+from .entities import *

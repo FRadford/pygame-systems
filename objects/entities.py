@@ -1,7 +1,9 @@
 import math
-from random import gauss, randint
+from random import randint
 
 import pygame
+
+from helpers.utilities import gaussian, clamp
 
 
 # decorator function to check collisions on sprites
@@ -28,21 +30,6 @@ def basic_movement(func):
                     self.rect.top = other.rect.bottom  # if colliding with the bottom side of an object move out
 
     return wrapper
-
-
-def gaussian(mu, inverse_scale):
-    # return a random integer from a gaussian distribution with mean mu and standard deviation mu / inverse_scale
-    return int(gauss(mu, round(mu / inverse_scale)))
-
-
-def clamp(n, minimum, maximum):
-    # clamp any number n between minimum and maximum values
-    return max(minimum, min(n, maximum))
-
-
-def linear_conversion(old_value, old_range, new_range):
-    # convert a number from a range to a number in a new range, maintaining the relative position of the number
-    return (((old_value - old_range[0]) * (new_range[1] - new_range[0])) / (old_range[1] - old_range[0])) + new_range[0]
 
 
 def load_sprites(sprite_paths, scale):
@@ -121,6 +108,9 @@ class DynamicSprite(StaticSprite):
                 self.y_speed_buffer -= speed_int
 
     def off_surface(self, surface):
+        """
+        Returns True if the sprite is no longer within the provided surface
+        """
         if self.rect.right < 0 or \
                 self.rect.left > surface.get_rect().width or \
                 self.rect.bottom < 0 or \
