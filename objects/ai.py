@@ -1,6 +1,6 @@
 import math
 
-from objects.entities import DynamicSprite, StaticSprite
+from pygameplus.objects.entities import DynamicSprite, StaticSprite
 
 
 class AIMixin(object):
