@@ -2,8 +2,7 @@ import math
 from random import randint
 
 import pygame
-
-from helpers.utilities import gaussian, clamp
+from pygameplus.helpers.utilities import gaussian, clamp
 
 
 # decorator function to check collisions on sprites
