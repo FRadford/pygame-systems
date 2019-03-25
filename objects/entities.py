@@ -4,8 +4,6 @@ from random import randint
 import pygame
 from pygameplus.helpers.utilities import gaussian, clamp
 
-from helpers.utilities import gaussian, clamp
-
 
 # decorator function to check collisions on sprites
 def basic_movement(func):
